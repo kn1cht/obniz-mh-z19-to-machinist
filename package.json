@@ -1,0 +1,18 @@
+{
+  "name": "obniz-co2sensor-to-machinist",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kn1cht <16277200+kn1cht@users.noreply.github.com> (https://scrapbox.io/kn1cht)",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^2.6.0",
+    "dotenv": "^8.1.0",
+    "obniz": "^2.3.0",
+    "request": "^2.88.0"
+  }
+}
