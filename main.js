@@ -5,6 +5,12 @@ const Obniz = require('obniz');
 const obniz = new Obniz(process.env.OBNIZ_ID);
 const request = require('request');
 
+const sensorCommand = {
+  read        : [0xff, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79],
+  zeroCalib   : [0xff, 0x01, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78],
+  autoCalibOn : [0xff, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86],
+};
+
 const sendData = value => {
   const options = {
     uri    : 'https://gw.machinist.iij.jp/endpoint',
@@ -26,8 +32,6 @@ const sendData = value => {
   request.post(options, err => { if(err) console.error(err); });
 }
 
-const readCo2 = () => obniz.uart0.send([0xff, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79]);
-
 const onReceive = (data, _) => {
   if(data[0] == 0xff && data[1] == 0x86) {
     const level = data[2] * 100 + data[3];
@@ -38,7 +42,7 @@ const onReceive = (data, _) => {
     const canvas = createCanvas(128, 64);
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
-    ctx.font = '30px Avenir';
+    ctx.font = '25px Avenir';
     ctx.fillText(`${level} ppm`, 0, 40);
     obniz.display.clear();
     obniz.display.draw(ctx);
@@ -48,9 +52,12 @@ const onReceive = (data, _) => {
 
 obniz.onconnect = async () => {
   obniz.uart0.start({ tx: 0, rx: 1, baud: 9600 });
+  obniz.uart0.send(sensorCommand.zeroCalib);
+  obniz.uart0.send(sensorCommand.autoCalibOn);
+  console.info('initializing complete!');
   obniz.wired('USB', { gnd: 4, vcc: 6 }).on();
   obniz.keepWorkingAtOffline(true);
   obniz.uart0.onreceive = onReceive;
   // update every 20sec
-  setInterval(readCo2, 20 * 1000);
+  setInterval(obniz.uart0.send(sensorCommand.read), 20 * 1000);
 };
