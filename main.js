@@ -34,7 +34,7 @@ const sendData = value => {
 
 const onReceive = (data, _) => {
   if(data[0] == 0xff && data[1] == 0x86) {
-    const level = data[2] * 100 + data[3];
+    const level = data[2] * 256 + data[3];
     console.log(level);
     if(level <= 300) return; // ignore inaccurate data
     sendData(level);
@@ -42,13 +42,15 @@ const onReceive = (data, _) => {
     const canvas = createCanvas(128, 64);
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
-    ctx.font = '25px Avenir';
+    ctx.font = '20px Avenir';
     ctx.fillText(`${level} ppm`, 0, 40);
     obniz.display.clear();
     obniz.display.draw(ctx);
     ctx.clearRect(0, 0, 128, 64);
   }
 }
+
+const read = () => { obniz.uart0.send(sensorCommand.read); }
 
 obniz.onconnect = async () => {
   obniz.uart0.start({ tx: 0, rx: 1, baud: 9600 });
@@ -59,5 +61,5 @@ obniz.onconnect = async () => {
   obniz.keepWorkingAtOffline(true);
   obniz.uart0.onreceive = onReceive;
   // update every 20sec
-  setInterval(obniz.uart0.send(sensorCommand.read), 20 * 1000);
+  setInterval(read, 20 * 1000);
 };
