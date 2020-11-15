@@ -11,7 +11,7 @@ const sensorCommand = {
   autoCalibOn : [0xff, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86],
 };
 
-const sendData = value => {
+const sendDataMachinist = value => {
   const options = {
     uri    : 'https://gw.machinist.iij.jp/endpoint',
     headers: {
@@ -32,12 +32,31 @@ const sendData = value => {
   request.post(options, err => { if(err) console.error(err); });
 }
 
+const sendDataMackerel = value => {
+  const options = {
+    uri    : 'https://mackerel.io/api/v0/services/' + process.env.MACKEREL_SERVICE_NAME + '/tsdb',
+    headers: {
+      'Content-Type' : 'application/json',
+      'X-Api-Key'    : process.env.MACKEREL_API_KEY,
+    },
+    json: [
+      {
+        name : 'co2_level_ppm',
+        time : Math.floor((new Date).getTime() / 1000),
+        value
+      }
+    ]
+  };
+  request.post(options, err => { if(err) console.error(err); });
+}
+
 const onReceive = (data, _) => {
   if(data[0] == 0xff && data[1] == 0x86) {
     const level = data[2] * 256 + data[3];
     console.log(level);
     if(level <= 300) return; // ignore inaccurate data
-    sendData(level);
+    sendDataMachinist(level);
+    sendDataMackerel(level);
 
     const canvas = createCanvas(128, 64);
     const ctx = canvas.getContext('2d');
